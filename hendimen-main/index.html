@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Hendimen</title>
+    <link rel="icon" type="image/png" href="https://i.imgur.com/cuIWlLe.png">
+    <!-- External CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css.css">
+</head>
+<body>
+    <!-- Loading Backdrop -->
+    <div class="loading-backdrop" id="loadingBackdrop">
+        <div class="loading-spinner"></div>
+    </div>
+    <!-- Auth Pages -->
+    <div id="authPage" class="page active">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-tabs">
+                    <div class="auth-tab active" onclick="switchAuthTab('login')">Masuk</div>
+                    <div class="auth-tab" onclick="switchAuthTab('register')">Daftar</div>
+                </div>
+                <form id="loginForm" class="auth-form active" autocomplete="off">
+                    <div class="form-group">
+                        <label for="loginEmail">Email atau Nomor Telepon</label>
+                        <input type="text" id="loginEmail" class="form-control" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Kata Sandi</label>
+                        <input type="password" id="loginPassword" class="form-control" required autocomplete="off">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Masuk</button>
+                    <div class="auth-footer">
+                        <a href="#">Lupa kata sandi?</a>
+                    </div>
+                </form>
+                <form id="registerForm" class="auth-form" autocomplete="off">
+                    <div class="form-group">
+                        <label for="userType">Saya ingin mendaftar sebagai:</label>
+                        <select id="userType" class="form-control">
+                            <option value="helper">Helper (Siap Membantu)</option>
+                            <option value="requester">Requester (Butuh Bantuan)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="regName">Nama Lengkap</label>
+                        <input type="text" id="regName" class="form-control" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="regEmail">Email</label>
+                        <input type="email" id="regEmail" class="form-control" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="regPhone">Nomor Telepon</label>
+                        <input type="tel" id="regPhone" class="form-control" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">Kata Sandi</label>
+                        <input type="password" id="regPassword" class="form-control" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="regConfirmPassword">Konfirmasi Kata Sandi</label>
+                        <input type="password" id="regConfirmPassword" class="form-control" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="regId">Upload KTP/SIM/KTM</label>
+                        <input type="file" id="regId" class="form-control">
+                        <small>Verifikasi identitas diperlukan untuk keamanan platform</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Daftar</button>
+                    <div class="auth-footer">
+                        Dengan mendaftar, Anda menyetujui <a href="#">Syarat & Ketentuan</a> kami
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Dashboard Page -->
+    <div id="dashboardPage" class="page">
+        <header>
+            <div class="container">
+                <nav class="navbar">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="logo-container">
+                        <img src="https://i.imgur.com/cuIWlLe.png" class="logo-img" alt="Hendimen Logo">
+                    </div>
+                    <div class="user-actions">
+                        <div class="role-switch">
+                            <button class="role-btn active" id="requesterBtn">Requester</button>
+                            <button class="role-btn" id="helperBtn">Helper</button>
+                        </div>
+                        <div class="notification-icon" id="notificationIcon">
+                            <i class="fas fa-bell"></i>
+                            <div class="notification-badge" id="notificationBadge">0</div>
+                            <div class="notification-dropdown" id="notificationDropdown">
+                                <!-- Notifications akan diisi secara dinamis -->
+                            </div>
+                        </div>
+                        <div class="user-profile">
+                            <div class="avatar" id="profileAvatar">AS</div>
+                            <span id="profileName">Ahmad Surya</span>
+                            <button class="btn btn-outline" onclick="logout()">Keluar</button>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </header>
+        <div class="mobile-overlay" id="mobileOverlay"></div>
+        <div class="container">
+            <div class="dashboard">
+                <div class="sidebar" id="sidebar">
+                    <div class="sidebar-section">
+                        <h3>Menu Utama</h3>
+                        <ul class="sidebar-menu">
+                            <li><a href="#" class="sidebar-link active" data-page="homePage"><i class="fas fa-home"></i> Beranda</a></li>
+                            <li><a href="#" class="sidebar-link" data-page="jobsPage"><i class="fas fa-briefcase"></i> Pekerjaan Saya</a></li>
+                            <li><a href="#" class="sidebar-link" data-page="messagesPage"><i class="fas fa-comments"></i> Pesan <span class="notification-badge">0</span></a></li>
+                            <li><a href="#" class="sidebar-link" data-page="walletPage"><i class="fas fa-wallet"></i> Dompet Saya</a></li>
+                            <li><a href="#" class="sidebar-link" data-page="ratingPage"><i class="fas fa-star"></i> Rating &amp; Ulasan</a></li>
+                            <li><a href="#" class="sidebar-link" data-page="historyPage"><i class="fas fa-history"></i> Riwayat</a></li>
+                            <li><a href="#" class="sidebar-link helper-only" data-page="analyticsPage"><i class="fas fa-chart-line"></i> Analitik</a></li>
+                            <li><a href="#" class="sidebar-link" data-page="settingsPage"><i class="fas fa-cog"></i> Pengaturan</a></li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <h3>Kategori</h3>
+                        <ul class="sidebar-menu">
+                            <li><a href="#" class="cat-link" data-cat="moving"><i class="fas fa-truck-moving"></i> Pindahan</a></li>
+                            <li><a href="#" class="cat-link" data-cat="transport"><i class="fas fa-car"></i> Antar Jemput</a></li>
+                            <li><a href="#" class="cat-link" data-cat="delivery"><i class="fas fa-box"></i> Pengiriman</a></li>
+                            <li><a href="#" class="cat-link" data-cat="tools"><i class="fas fa-tools"></i> Perbaikan</a></li>
+                            <li><a href="#" class="cat-link" data-cat="event"><i class="fas fa-user-friends"></i> Jaga Acara</a></li>
+                            <li><a href="#" class="cat-link" data-cat="other"><i class="fas fa-ellipsis-h"></i> Lainnya</a></li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <h3>Fitur Lainnya</h3>
+                        <ul class="sidebar-menu">
+                            <li><a href="#" class="sidebar-link" data-page="favoritesPage"><i class="fas fa-heart"></i> Favorit</a></li>
+                            <li><a href="#" class="sidebar-link" data-page="referralPage"><i class="fas fa-gift"></i> Program Referral</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="main-content">
+                    <!-- Halaman Beranda -->
+                    <div id="homePage" class="tabbed-section page-main active">
+                        <!-- Profile Completion -->
+                        <div class="profile-completion">
+                            <div>Lengkapi profil Anda untuk meningkatkan kepercayaan!</div>
+                            <div class="profile-completion-bar">
+                                <div class="profile-completion-fill"></div>
+                            </div>
+                            <div style="font-size:0.85rem; margin-top:4px;">75% lengkap</div>
+                        </div>
+                        <!-- Requester View -->
+                        <div class="requester-view" id="requesterView">
+                            <div class="dashboard-header">
+                                <h1>Beranda Requester</h1>
+                                <div>
+                                    <button class="btn btn-primary" onclick="openModal('createJobModal')">
+                                        <i class="fas fa-plus"></i> Buat Permintaan Bantuan
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Service Categories -->
+                            <div class="service-categories">
+                                <div class="service-card">
+                                    <i class="fas fa-truck-moving"></i>
+                                    <span>Pindahan</span>
+                                </div>
+                                <div class="service-card">
+                                    <i class="fas fa-car"></i>
+                                    <span>Antar Jemput</span>
+                                </div>
+                                <div class="service-card">
+                                    <i class="fas fa-box"></i>
+                                    <span>Pengiriman</span>
+                                </div>
+                                <div class="service-card">
+                                    <i class="fas fa-tools"></i>
+                                    <span>Perbaikan</span>
+                                </div>
+                                <div class="service-card">
+                                    <i class="fas fa-user-friends"></i>
+                                    <span>Jaga Acara</span>
+                                </div>
+                                <div class="service-card">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                    <span>Lainnya</span>
+                                </div>
+                            </div>
+                            <!-- Schedule Reminder -->
+                            <div class="schedule-reminder">
+                                <div><i class="fas fa-clock"></i> <strong>Pengingat Jadwal</strong></div>
+                                <div>Anda memiliki 0 pekerjaan aktif yang perlu dipantau</div>
+                            </div>
+                            <div class="stats-cards">
+                                <div class="stat-card"><i class="fas fa-bell"></i><h3 id="activeJobsCount">0</h3><p>Permintaan Aktif</p></div>
+                                <div class="stat-card"><i class="fas fa-check-circle"></i><h3>0</h3><p>Selesai</p></div>
+                                <div class="stat-card"><i class="fas fa-star"></i><h3>0.0</h3><p>Rating Rata-rata</p></div>
+                                <div class="stat-card"><i class="fas fa-wallet"></i><h3>Rp 0</h3><p>Total Dibayarkan</p></div>
+                            </div>
+                            <!-- Search Box -->
+                            <div class="search-box">
+                                <input type="text" id="homeSearch" placeholder="Cari pekerjaan, lokasi, atau kategori...">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="filters">
+                                <div class="filter-row">
+                                    <div class="filter-group">
+                                        <label for="categoryFilter">Kategori</label>
+                                        <select id="categoryFilter" class="filter-select" onchange="filterJobs()">
+                                            <option value="all">Semua Kategori</option>
+                                            <option value="moving">Pindahan</option>
+                                            <option value="delivery">Pengiriman</option>
+                                            <option value="transport">Antar Jemput</option>
+                                            <option value="event">Jaga Acara</option>
+                                        </select>
+                                    </div>
+                                    <div class="filter-group">
+                                        <label for="statusFilter">Status</label>
+                                        <select id="statusFilter" class="filter-select" onchange="filterJobs()">
+                                            <option value="all">Semua Status</option>
+                                            <option value="open">Terbuka</option>
+                                            <option value="in-progress">Dalam Proses</option>
+                                            <option value="completed">Selesai</option>
+                                        </select>
+                                    </div>
+                                    <div class="filter-group">
+                                        <label for="sortFilter">Urutkan</label>
+                                        <select id="sortFilter" class="filter-select" onchange="filterJobs()">
+                                            <option value="newest">Terbaru</option>
+                                            <option value="oldest">Terlama</option>
+                                            <option value="price-high">Harga Tertinggi</option>
+                                            <option value="price-low">Harga Terendah</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="requesterJobList" class="job-list"></div>
+                        </div>
+                        <!-- Helper View -->
+                        <div class="helper-view" id="helperView" style="display: none;">
+                            <div class="dashboard-header">
+                                <h1>Beranda Helper</h1>
+                                <div class="location-info"><i class="fas fa-map-marker-alt"></i> Pekanbaru, Riau</div>
+                            </div>
+                            <!-- Schedule Reminder -->
+                            <div class="schedule-reminder">
+                                <div><i class="fas fa-clock"></i> <strong>Pengingat Jadwal</strong></div>
+                                <div>Anda memiliki 0 pekerjaan aktif hari ini</div>
+                            </div>
+                            <div class="stats-cards">
+                                <div class="stat-card"><i class="fas fa-briefcase"></i><h3>0</h3><p>Pekerjaan Aktif</p></div>
+                                <div class="stat-card"><i class="fas fa-check-circle"></i><h3>0</h3><p>Selesai</p></div>
+                                <div class="stat-card"><i class="fas fa-star"></i><h3>0.0</h3><p>Rating Anda</p></div>
+                                <div class="stat-card"><i class="fas fa-wallet"></i><h3>Rp 0</h3><p>Pendapatan Bulan Ini</p></div>
+                            </div>
+                            <!-- Search Box -->
+                            <div class="search-box">
+                                <input type="text" id="helperSearch" placeholder="Cari pekerjaan, lokasi, atau kategori...">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="filters">
+                                <div class="filter-row">
+                                    <div class="filter-group">
+                                        <label for="helperCategoryFilter">Kategori</label>
+                                        <select id="helperCategoryFilter" class="filter-select" onchange="filterHelperJobs()">
+                                            <option value="all">Semua Kategori</option>
+                                            <option value="moving">Pindahan</option>
+                                            <option value="delivery">Pengiriman</option>
+                                            <option value="transport">Antar Jemput</option>
+                                            <option value="event">Jaga Acara</option>
+                                        </select>
+                                    </div>
+                                    <div class="filter-group">
+                                        <label for="distanceFilter">Jarak</label>
+                                        <select id="distanceFilter" class="filter-select" onchange="filterHelperJobs()">
+                                            <option value="all">Semua Jarak</option>
+                                            <option value="1km">≤ 1 km</option>
+                                            <option value="5km">≤ 5 km</option>
+                                            <option value="10km">≤ 10 km</option>
+                                        </select>
+                                    </div>
+                                    <div class="filter-group">
+                                        <label for="helperSortFilter">Urutkan</label>
+                                        <select id="helperSortFilter" class="filter-select" onchange="filterHelperJobs()">
+                                            <option value="newest">Terbaru</option>
+                                            <option value="price-high">Harga Tertinggi</option>
+                                            <option value="price-low">Harga Terendah</option>
+                                            <option value="distance">Terdekat</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="helperJobList" class="job-list"></div>
+                        </div>
+                    </div>
+                    <!-- Halaman Pekerjaan Saya -->
+                    <div id="jobsPage" class="tabbed-section page-main" style="display:none;">
+                        <div class="dashboard-header">
+                            <h1>Pekerjaan Saya</h1>
+                        </div>
+                        <div class="tabbed-menu" style="margin-bottom:20px;">
+                            <button class="tabbed-btn active" data-tab="activeJobsTab" onclick="switchTab('activeJobsTab', this)">Aktif</button>
+                            <button class="tabbed-btn" data-tab="completedJobsTab" onclick="switchTab('completedJobsTab', this)">Selesai</button>
+                            <button class="tabbed-btn" data-tab="favoriteJobsTab" onclick="switchTab('favoriteJobsTab', this)">Favorit</button>
+                        </div>
+                        <!-- Tab Aktif -->
+                        <div id="activeJobsTab" class="tab-page">
+                            <div class="filters">
+                                <div class="filter-row">
+                                    <div class="filter-group">
+                                        <label for="myJobSearch">Cari Pekerjaan</label>
+                                        <input id="myJobSearch" class="form-control" type="text" placeholder="Judul pekerjaan..." oninput="filterMyJobs()">
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="activeJobList" class="job-list"></div>
+                        </div>
+                        <!-- Tab Selesai -->
+                        <div id="completedJobsTab" class="tab-page" style="display:none;">
+                            <div class="filters">
+                                <div class="filter-row">
+                                    <div class="filter-group">
+                                        <label for="myJobDoneSearch">Cari Pekerjaan Selesai</label>
+                                        <input id="myJobDoneSearch" class="form-control" type="text" placeholder="Judul pekerjaan..." oninput="filterMyJobs()">
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="completedJobList" class="job-list"></div>
+                        </div>
+                        <!-- Tab Favorit -->
+                        <div id="favoriteJobsTab" class="tab-page" style="display:none;">
+                            <div id="favoriteJobList" class="job-list"></div>
+                        </div>
+                    </div>
+                    <!-- Halaman Pesan (NEW CHAT) -->
+                    <div id="messagesPage" class="tabbed-section page-main" style="display:none;">
+                        <div class="dashboard-header">
+                            <h1>Pesan</h1>
+                        </div>
+                        <div class="chat-container">
+                            <div class="chat-sidebar">
+                                <div class="chat-list-item active">Budi (Pekerjaan #5)</div>
+                                <div class="chat-list-item">Siti (Pekerjaan #2)</div>
+                                <div class="chat-list-item">Hendri (Pekerjaan #7)</div>
+                            </div>
+                            <div class="chat-main">
+                                <div class="chat-header">Budi • Helper <span class="verification-badge"><i class="fas fa-check"></i> Terverifikasi</span></div>
+                                <div class="chat-messages" id="chatMessages">
+                                    <div class="message received">Hai, saya siap bantu pindahan Anda besok pagi.</div>
+                                    <div class="message sent">Terima kasih! Jam berapa bisa mulai?</div>
+                                    <div class="message received">Jam 8 pagi, apakah cocok?</div>
+                                    <div class="message sent">Cocok sekali. Sampai jumpa!</div>
+                                </div>
+                                <div class="chat-input-area">
+                                    <input type="text" class="chat-input" id="chatInput" placeholder="Ketik pesan...">
+                                    <button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Halaman Dompet -->
+                    <div id="walletPage" class="tabbed-section page-main" style="display:none;">
+                        <div class="dashboard-header">
+                            <h1>Dompet Saya</h1>
+                        </div>
+                        <div style="background:#fff; border-radius:8px; padding:24px 24px 10px 24px;margin-bottom:18px; box-shadow:0 2px 10px rgba(0,0,0,0.05);" class="dark-mode-bg">
+                            <div style="font-size:1.2rem;color:var(--gray);margin-bottom:7px;">Saldo Tersedia</div>
+                            <div style="font-size:2.2rem;font-weight:700;color:var(--primary);margin-bottom:15px;" id="walletBalance">Rp 0</div>
+                            <button class="btn btn-success" onclick="openModal('topupModal')"><i class="fas fa-plus"></i> Top Up</button>
+                            <button class="btn btn-outline" onclick="alert('Fitur tarik saldo akan segera hadir!')"><i class="fas fa-arrow-down"></i> Tarik Saldo</button>
+                        </div>
+                        <div style="margin-bottom:10px;font-weight:600;font-size:1.1rem;">Riwayat Transaksi</div>
+                        <div style="background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.05);padding:16px;" class="dark-mode-bg">
+                            <table style="width:100%;border-collapse:collapse;">
+                                <thead>
+                                    <tr style="background:var(--light-gray);">
+                                        <th style="text-align:left;padding:10px;">Tanggal</th>
+                                        <th style="text-align:left;">Deskripsi</th>
+                                        <th style="text-align:right;">Jumlah</th>
+                                        <th style="text-align:right;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="walletHistory">
+                                    <!-- Riwayat akan diisi secara dinamis -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Halaman Rating & Ulasan -->
+                    <div id="ratingPage" class="tabbed-section page-main" style="display:none;">
+                        <div class="dashboard-header">
+                            <h1>Rating &amp; Ulasan</h1>
+                        </div>
+                        <div class="stats-cards" style="margin-bottom:20px;">
+                            <div class="stat-card">
+                                <i class="fas fa-star"></i>
+                                <h3>0.0</h3>
+                                <p>Rating Rata-rata</p>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-users"></i>
+                                <h3>0</h3>
+                                <p>Total Ulasan</p>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-thumbs-up"></i>
+                                <h3>0%</h3>
+                                <p>Kepuasan Pengguna</p>
+                            </div>
+                        </div>
+                        <div style="background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.05);padding:20px;" class="dark-mode-bg">
+                            <div style="font-weight:600;font-size:1.1rem;margin-bottom:10px;">Ulasan Pengguna</div>
+                            <div id="reviewList">
+                                <!-- Ulasan akan diisi secara dinamis -->
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Halaman Riwayat -->
+                    <div id="historyPage" class="tabbed-section page-main" style="display:none;">
+                        <div class="dashboard-header">
+                            <h1>Riwayat Pekerjaan</h1>
+                        </div>
+                        <div class="filters">
+                            <div class="filter-row">
+                                <div class="filter-group">
+                                    <label for="historySearch">Cari Riwayat</label>
+                                    <input id="historySearch" class="form-control" type="text" placeholder="Judul atau lokasi..." oninput="filterHistory()">
+                                </div>
+                                <div class="filter-group">
+                                    <label for="historySort">Urutkan</label>
+                                    <select id="historySort" class="filter-select" onchange="filterHistory()">
+                                        <option value="newest">Terbaru</option>
+                                        <option value="oldest">Terlama</option>
+                                        <option value="price-high">Harga Tertinggi</option>
+                                        <option value="price-low">Harga Terendah</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="historyList" class="job-list"></div>
+                    </div>
+                    <!-- Halaman Analitik (Hanya untuk Helper) -->
+                    <div id="analyticsPage" class="tabbed-section page-main" style="display:none;">
+                        <div class="dashboard-header">
+                            <h1>Analitik & Statistik</h1>
+                        </div>
+                        <div class="stats-cards" style="margin-bottom:20px;">
+                            <div class="stat-card">
+                                <i class="fas fa-chart-line"></i>
+                                <h3>0</h3>
+                                <p>Pekerjaan/Bulan</p>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <h3>Rp 0</h3>
+                                <p>Pendapatan/Bulan</p>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-clock"></i>
+                                <h3>0</h3>
+                                <p>Jam/Pekerjaan</p>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <h3>0km</h3>
+                                <p>Jarak Rata-rata</p>
+                            </div>
+                        </div>
+                        <div class="analytics-chart">
+                            <h3 style="margin-bottom:15px;">Grafik Pendapatan Bulanan</h3>
+                            <div style="height:200px;background:#f5f5f5;border-radius:8px;display:flex;align-items:flex-end;padding:10px;" class="dark-mode-bg">
+                                <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+                                    <div style="background:var(--primary);width:80%;height:0px;border-radius:4px;"></div>
+                                    <div style="margin-top:5px;">Jan</div>
+                                </div>
+                                <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+                                    <div style="background:var(--primary);width:70%;height:0px;border-radius:4px;"></div>
+                                    <div style="margin-top:5px;">Feb</div>
+                                </div>
+                                <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+                                    <div style="background:var(--primary);width:90%;height:0px;border-radius:4px;"></div>
+                                    <div style="margin-top:5px;">Mar</div>
+                                </div>
+                                <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+                                    <div style="background:var(--primary);width:85%;height:0px;border-radius:4px;"></div>
+                                    <div style="margin-top:5px;">Apr</div>
+                                </div>
+                                <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+                                    <div style="background:var(--primary);width:95%;height:0px;border-radius:4px;"></div>
+                                    <div style="margin-top:5px;">Mei</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Halaman Favorit -->
+                    <div id="favoritesPage" class="tabbed-section page-main" style="display:none;">
+                        <div class="dashboard-header">
+                            <h1>Pekerjaan Favorit</h1>
+                        </div>
+                        <div id="favoritesList" class="job-list">
+                            <div class="empty-state">
+                                <i class="fas fa-heart"></i>
+                                <h3>Belum ada pekerjaan favorit</h3>
+                                <p>Simpan pekerjaan yang menarik dengan menekan ikon hati pada kartu pekerjaan.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Halaman Referral -->
+                    <div id="referralPage" class="tabbed-section page-main" style="display:none;">
+                        <div class="dashboard-header">
+                            <h1>Program Referral</h1>
+                        </div>
+                        <div class="referral-code">
+                            <h3>Bagikan kode referral Anda</h3>
+                            <div class="code">HENDI123</div>
+                            <p>Dapatkan Rp 50.000 untuk setiap teman yang bergabung menggunakan kode Anda</p>
+                            <p><strong>Referral Berhasil: <span id="referralCount">0</span></strong></p>
+                            <button class="btn btn-primary" onclick="copyReferralCode()">Salin Kode</button>
+                        </div>
+                        <div style="background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.05);padding:20px;margin-top:20px;" class="dark-mode-bg">
+                            <h3 style="margin-bottom:15px;">Riwayat Referral</h3>
+                            <div class="empty-state" style="padding:20px;">
+                                <i class="fas fa-users"></i>
+                                <h3>Belum ada referral</h3>
+                                <p>Bagikan kode referral Anda kepada teman-teman untuk mendapatkan bonus.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Halaman Pengaturan -->
+                    <div id="settingsPage" class="tabbed-section page-main" style="display:none;">
+                        <div class="dashboard-header">
+                            <h1>Pengaturan Akun</h1>
+                        </div>
+                        <div style="background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.05);padding:24px 22px 18px 22px;margin-bottom:20px;" class="dark-mode-bg">
+                            <div class="form-group" style="margin-bottom:18px;">
+                                <label>Notifikasi</label>
+                                <div>
+                                    <input type="checkbox" id="notifJob" checked> Notifikasi pekerjaan baru
+                                </div>
+                                <div>
+                                    <input type="checkbox" id="notifPromo"> Notifikasi promo &amp; update
+                                </div>
+                                <div>
+                                    <input type="checkbox" id="notifMessage" checked> Notifikasi pesan
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-bottom:18px;">
+                                <label>Verifikasi Identitas</label>
+                                <div>
+                                    <span>Status: </span>
+                                    <span class="verification-badge"><i class="fas fa-check"></i> Terverifikasi</span>
+                                </div>
+                                <small>Akun Anda telah terverifikasi dan dapat menggunakan semua fitur platform.</small>
+                            </div>
+                            <div class="form-group" style="margin-bottom:18px;">
+                                <label>Mode Tampilan</label>
+                                <div>
+                                    <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()"> Mode Gelap
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top:18px;">
+                            <button class="btn btn-outline" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Keluar Akun</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Bottom Navigation for Mobile -->
+        <div class="bottom-nav">
+            <div class="bottom-nav-items">
+                <a href="#" class="bottom-nav-item active" data-page="homePage">
+                    <i class="fas fa-home"></i>
+                    <span>Beranda</span>
+                </a>
+                <a href="#" class="bottom-nav-item" data-page="jobsPage">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Pekerjaan</span>
+                </a>
+                <a href="#" class="bottom-nav-item" data-page="messagesPage">
+                    <i class="fas fa-comments"></i>
+                    <span>Pesan</span>
+                </a>
+                <a href="#" class="bottom-nav-item" data-page="walletPage">
+                    <i class="fas fa-wallet"></i>
+                    <span>Dompet</span>
+                </a>
+                <a href="#" class="bottom-nav-item" data-page="ratingPage">
+                    <i class="fas fa-star"></i>
+                    <span>Ulasan</span>
+                </a>
+                <a href="#" class="bottom-nav-item helper-only" data-page="analyticsPage">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analitik</span>
+                </a>
+            </div>
+        </div>
+        <!-- Dark Mode Toggle Button -->
+        <div class="dark-mode-toggle" onclick="toggleDarkMode()">
+            <i class="fas fa-moon"></i>
+        </div>
+    </div>
+    <!-- Modal Top Up -->
+    <div id="topupModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('topupModal')">&times;</span>
+            <h2>Top Up Saldo</h2>
+            <form id="topupForm">
+                <div class="form-group">
+                    <label>Metode Top Up</label>
+                    <div class="topup-methods">
+                        <div class="topup-method" data-method="dana"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHbelUsAOasaznlczskMkFd2hgtFHaBt_aBw&s" alt="DANA">DANA</div>
+                        <div class="topup-method" data-method="shopeepay"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnQ54gdjaHKfhtVWT3C1n-gLZljKqucGLOeg&s" alt="ShopeePay">ShopeePay</div>
+                        <div class="topup-method" data-method="qris"><img src="https://i.imgur.com/JmfTHcd.png" alt="QRIS">QRIS</div>
+                        <div class="topup-method" data-method="va">Virtual Account</div>
+                    </div>
+                    <div class="topup-va-list" id="topupVALIST" style="display:none;">
+                        <label for="vaBank">Pilih Bank:</label>
+                        <select id="vaBank">
+                            <option value="bca">BCA</option>
+                            <option value="bri">BRI</option>
+                            <option value="bni">BNI</option>
+                            <option value="mandiri">Mandiri</option>
+                            <option value="permata">Permata</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="topupNominal">Nominal Top Up (Rp)</label>
+                    <input type="number" id="topupNominal" class="form-control" required min="10000" step="10000" placeholder="Minimal 10.000">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('topupModal')">Batal</button>
+                    <button type="submit" class="btn btn-primary">Lanjutkan Top Up</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Create Job Modal -->
+    <div id="createJobModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('createJobModal')">&times;</span>
+            <h2>Buat Permintaan Bantuan Baru</h2>
+            <form id="createJobForm">
+                <div class="form-group">
+                    <label for="jobTitle">Judul Pekerjaan</label>
+                    <input type="text" id="jobTitle" class="form-control" placeholder="Contoh: Butuh bantuan pindah barang" required>
+                </div>
+                <div class="form-group">
+                    <label for="jobCategory">Kategori</label>
+                    <select id="jobCategory" class="form-control" required>
+                        <option value="">Pilih Kategori</option>
+                        <option value="moving">Pindahan</option>
+                        <option value="delivery">Pengiriman</option>
+                        <option value="transport">Antar Jemput</option>
+                        <option value="event">Jaga Acara</option>
+                        <option value="other">Lainnya</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="jobDescription">Deskripsi Pekerjaan</label>
+                    <textarea id="jobDescription" class="form-control" placeholder="Jelaskan detail pekerjaan yang dibutuhkan" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="jobLocation">Lokasi</label>
+                    <input type="text" id="jobLocation" class="form-control" placeholder="Alamat lengkap" required>
+                </div>
+                <div class="form-group">
+                    <label for="jobPrice">Upah yang Ditawarkan (Rp)</label>
+                    <input type="number" id="jobPrice" class="form-control" placeholder="Contoh: 75000" required>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="emergencyJob"> Tandai sebagai kebutuhan emergency (upah akan ditingkatkan 25%)
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('createJobModal')">Batal</button>
+                    <button type="submit" class="btn btn-primary">Posting Permintaan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+ 
+
+    <!-- Modal Pembayaran QRIS (TAMBAHKAN INI) -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close-modal" onclick="closeModal('paymentModal')">&times;</span>
+            <h2 style="text-align: center; color: var(--primary); margin-bottom: 20px;">Pembayaran QRIS</h2>
+            
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="background: #f5f5f5; padding: 20px; border-radius: 12px; display: inline-block;">
+                    <!-- QRIS Image -->
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=HENDIMEN-PAYMENT" 
+                         alt="QRIS Code" style="width: 200px; height: 200px;" id="qrisImage">
+                </div>
+            </div>
+            
+            <!-- Informasi Pembayaran -->
+            <div style="background: linear-gradient(135deg, #e8f4ff, #f0f8ff); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span style="font-weight: 600;">Total Pembayaran:</span>
+                    <span style="font-weight: 700; color: var(--primary);" id="paymentTotal">Rp 0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span style="font-weight: 600;">Biaya Layanan:</span>
+                    <span style="color: var(--danger);" id="serviceFee">Rp 2.500</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px dashed #ccc;">
+                    <span style="font-weight: 600;">Total Dibayar:</span>
+                    <span style="font-weight: 700; font-size: 1.2rem; color: var(--success);" id="totalPayment">Rp 2.500</span>
+                </div>
+            </div>
+            
+            <!-- Informasi Penting -->
+            <div style="background: #fff3cd; border: 1px solid #ffeeba; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="margin: 0; color: #856404; font-size: 0.9rem;">
+                    <i class="fas fa-info-circle" style="margin-right: 5px;"></i>
+                    <strong>Perhatian!</strong> Biaya layanan Rp 2.500 bersifat non-refundable. 
+                    Pembayaran ini untuk memastikan keseriusan permintaan Anda.
+                </p>
+            </div>
+            
+            <!-- Timer -->
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 0.9rem; color: var(--gray);">Sisa waktu pembayaran:</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);" id="paymentTimer">05:00</div>
+            </div>
+            
+            <!-- Cara Pembayaran -->
+            <div style="margin-bottom: 20px;">
+                <h4 style="margin-bottom: 10px;">Cara Pembayaran:</h4>
+                <ol style="padding-left: 20px; color: var(--gray);">
+                    <li>Buka aplikasi pembayaran yang mendukung QRIS (DANA, OVO, GoPay, ShopeePay, dll)</li>
+                    <li>Pilih menu "Scan QRIS" atau "Bayar dengan QRIS"</li>
+                    <li>Scan kode QR di atas</li>
+                    <li>Pastikan nominal yang tertera sesuai</li>
+                    <li>Konfirmasi pembayaran</li>
+                    <li>Klik tombol "Konfirmasi Pembayaran" setelah selesai</li>
+                </ol>
+            </div>
+            
+            <!-- Tombol Aksi -->
+            <div class="modal-footer" style="justify-content: center; gap: 10px;">
+                <button type="button" class="btn btn-outline" onclick="closeModal('paymentModal')">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+                <button type="button" class="btn btn-primary" onclick="confirmPayment()" id="confirmPaymentBtn">
+                    <i class="fas fa-check"></i> Konfirmasi Pembayaran
+                </button>
+            </div>
+            
+            <!-- Status Pembayaran -->
+            <div id="paymentStatus" style="text-align: center; margin-top: 15px; display: none;">
+                <span style="color: var(--warning);"><i class="fas fa-spinner fa-spin"></i> Menunggu pembayaran...</span>
+            </div>
+        </div>
+    </div>
+
+    
+
+    
+    <!-- Job Detail Modal -->
+    <div id="jobDetailModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('jobDetailModal')">&times;</span>
+            <div class="modal-header">
+                <h2 id="detailJobTitle">Judul Pekerjaan</h2>
+                <div id="detailJobBadge"></div>
+            </div>
+            <div class="modal-body">
+                <div class="job-detail-item">
+                    <label>Kategori</label>
+                    <p id="detailJobCategory">-</p>
+                </div>
+                <div class="job-detail-item">
+                    <label>Lokasi</label>
+                    <p id="detailJobLocation">-</p>
+                    <div class="map-container" id="detailJobMap">
+                        <!-- Peta akan ditampilkan di sini -->
+                    </div>
+                </div>
+                <div class="job-detail-item">
+                    <label>Upah</label>
+                    <p id="detailJobPrice" class="job-price">-</p>
+                </div>
+                <div class="job-detail-item">
+                    <label>Deskripsi</label>
+                    <p id="detailJobDescription">-</p>
+                </div>
+                <div class="job-detail-item">
+                    <label>Dibuat pada</label>
+                    <p id="detailJobDate">-</p>
+                </div>
+                <div class="job-detail-item">
+                    <label>Status</label>
+                    <p id="detailJobStatus">-</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('jobDetailModal')">Tutup</button>
+                <button type="button" class="btn btn-primary" id="detailActionBtn">Ambil Pekerjaan</button>
+                <button type="button" class="btn btn-outline favorite-btn" id="detailFavoriteBtn"><i class="far fa-heart"></i></button>
+            </div>
+        </div>
+    </div>
+    <!-- Rating Modal -->
+    <div id="ratingModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('ratingModal')">&times;</span>
+            <h2>Beri Rating & Ulasan</h2>
+            <form id="ratingForm">
+                <div class="form-group">
+                    <label>Rating</label>
+                    <div class="rating-input">
+                        <input type="radio" id="star5" name="rating" value="5">
+                        <label for="star5">★</label>
+                        <input type="radio" id="star4" name="rating" value="4">
+                        <label for="star4">★</label>
+                        <input type="radio" id="star3" name="rating" value="3">
+                        <label for="star3">★</label>
+                        <input type="radio" id="star2" name="rating" value="2">
+                        <label for="star2">★</label>
+                        <input type="radio" id="star1" name="rating" value="1">
+                        <label for="star1">★</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="reviewText">Ulasan</label>
+                    <textarea id="reviewText" class="form-control" placeholder="Bagikan pengalaman Anda..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('ratingModal')">Batal</button>
+                    <button type="submit" class="btn btn-primary">Kirim Ulasan</button>
+                </div>
+            </form>
+        </div>
+    </div>    
+    <!-- Leaflet JS for maps -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Custom JS -->
+    <script src="javascript (1) (1).js"></script>
+</body>
+</html>
